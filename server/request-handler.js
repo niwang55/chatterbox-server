@@ -16,54 +16,86 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var results = [];
+var results = [{username: 'default', text: 'default message'}];
 var requestHandler = function(request, response) {
+
+  var headers = defaultCorsHeaders;
+  headers['Content-Type'] = 'application/json';
 
   if (request.method === 'OPTIONS') {
     // The outgoing status.
     var statusCode = 200;
 
     // See the note below about CORS headers.
-    var headers = defaultCorsHeaders;
-
     // Tell the client we are sending them plain text.
     //
     // You will need to change this if you are sending something
     // other than plain text, like JSON or HTML.
-    headers['Content-Type'] = 'application/json';
-
     response.writeHead(statusCode, headers);
     response.end();
-  } else if (request.method === 'GET' && request.url === '/classes/messages') {
+
+  } else if (request.method === 'GET' && request.url === '/classes/messages?order=-createdAt') {
 
     request.on('error', function (err) {
       console.error(err, 'ERROR');
+    });
+    
+    results = results.sort(function(a, b) {
+      return b - a;
     });
 
     var responseBody = {
       results: results,
     };
-
-    response.writeHead(200, {'Content-Type': 'application/json'});
+    console.log(responseBody);
+    response.writeHead(200, headers);
     response.end(JSON.stringify(responseBody));
-  } else if (request.method === 'POST') {
-    var body = [];
-    request.on('data', function(chunk) {
-      body.push(JSON.parse(chunk));
-    });
 
-    request.on('end', function() {
-      results = results.concat(body);
+  } else if (request.method === 'GET' && request.url === '/classes/messages' ) {
+    request.on('error', function (err) {
+      console.error(err, 'ERROR');
     });
 
     var responseBody = {
       results: results
     };
 
-    response.writeHead(201, {'Content-Type': 'application/json'});
+    response.writeHead(200, headers);
+    response.end(JSON.stringify(responseBody));
+
+  } else if (request.method === 'POST' && request.url === '/classes/messages') {
+    var body = [];
+    request.on('data', function(chunk) {
+      var newChunk = JSON.parse(chunk);
+      newChunk.createdAt = new Date();
+      newChunk.objectId = Math.floor(Math.random() * 10000);
+      body.push(newChunk);
+    });
+
+    request.on('end', function() {
+      results = body.concat(results);
+    });
+
+    var responseBody = {
+      results: results
+    };
+
+    response.writeHead(201, headers);
+    response.end(JSON.stringify(responseBody));
+  } else if (request.method === 'DELETE' && request.url === '/classes/messages') {
+
+
+    results = [{username: 'default', text: 'EVERYTHING DELETED'}];
+   
+
+    var responseBody = {
+      results: results
+    };
+
+    response.writeHead(204, headers);
     response.end(JSON.stringify(responseBody));
   } else {
-    response.writeHead(404);
+    response.writeHead(404, headers);
     response.end();
   }
   // Request and Response come from node's http module.
