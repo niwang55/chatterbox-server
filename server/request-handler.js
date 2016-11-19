@@ -39,15 +39,11 @@ var requestHandler = function(request, response) {
     request.on('error', function (err) {
       console.error(err, 'ERROR');
     });
-    
-    results = results.sort(function(a, b) {
-      return b - a;
-    });
 
     var responseBody = {
       results: results,
     };
-    console.log(responseBody);
+
     response.writeHead(200, headers);
     response.end(JSON.stringify(responseBody));
 
@@ -93,7 +89,7 @@ var requestHandler = function(request, response) {
     };
 
     response.writeHead(204, headers);
-    response.end(JSON.stringify(responseBody));
+    response.end(JSON.stringify(responseBody)); 
   } else {
     response.writeHead(404, headers);
     response.end();
